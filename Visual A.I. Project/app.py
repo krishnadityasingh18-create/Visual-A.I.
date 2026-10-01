@@ -7,11 +7,11 @@ st.set_page_config(page_title="Flux Vision AI", page_icon="🎨")
 
 # 1. Accessing the Free Model
 # You will get this API URL from Hugging Face
-API_URL = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
+API_URL = "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell"
 
 def generate_image(prompt, api_key):
     headers = {"Authorization": f"Bearer {api_key}"}
-    response = requests.post(API_URL, headers=headers, json={"inputs": prompt})
+    response = requests.post(API_URL, headers=headers, json={"inputs": prompt}, timeout=120)
     return response.content
 
 # 2. Building the Interface
@@ -33,7 +33,11 @@ if st.button("🚀 Generate Image"):
         st.warning("Please enter a description.")
     else:
         with st.spinner("The AI is thinking..."):
-            image_raw = generate_image(prompt, hf_token)
+            try:
+                image_raw = generate_image(prompt, hf_token)
+            except requests.RequestException:
+                st.error("Could not reach Hugging Face. Check your internet connection and try again.")
+                st.stop()
             try:
                 img = Image.open(io.BytesIO(image_raw))
                 st.image(img, use_container_width=True)
